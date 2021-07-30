@@ -33,22 +33,22 @@ HEREDOC
 }
 
 while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -v|--version) PT_version="$2"; shift ;
-           if beginswith "6." "$PT_version"; then
-             PT_collection="puppet6"
-           elif beginswith "7." "$PT_version"; then
-             PT_collection="puppet7"
-           else
-             PT_collection="puppet"
-           fi ;;
-        -c|--collection) PT_collection="$2"; shift ;;
-        --cleanup) PT_cleanup=true; shift ;;
-        -n|--noop) PT__noop=true; shift ;;
-        -h|--help) usage; exit ;;
-        *) echo "Unknown parameter passed: $1"; usage; exit 1 ;;
-    esac
-    shift
+  case $1 in
+      -v|--version) PT_version="$2"; shift ;
+         if beginswith "6." "$PT_version"; then
+           PT_collection="puppet6"
+         elif beginswith "7." "$PT_version"; then
+           PT_collection="puppet7"
+         else
+           PT_collection="puppet"
+         fi ;;
+      -c|--collection) PT_collection="$2"; shift ;;
+      --cleanup) PT_cleanup=true; shift ;;
+      -n|--noop) PT__noop=true; shift ;;
+      -h|--help) usage; exit ;;
+      *) echo "Unknown parameter passed: $1"; usage; exit 1 ;;
+  esac
+  shift
 done
 
 # shellcheck disable=SC1000-SC9999
@@ -71,4 +71,3 @@ if [[ $PT__noop != true ]]; then
   fi
 fi
 SH
-
