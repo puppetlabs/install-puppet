@@ -1,0 +1,6 @@
+[submodule "puppetlabs-puppet_agent"]
+	path = modules/puppet_agent
+	url = https://github.com/puppetlabs/puppetlabs-puppet_agent.git
+[submodule "modules/facts"]
+	path = modules/facts
+	url = https://github.com/puppetlabs/puppetlabs-facts.git
