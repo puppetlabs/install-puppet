@@ -20,12 +20,20 @@ script which can be used with little to no external dependencies
 ### Dependencies
 
 * A non-Windows platform for which Puppet provides official packages (see the full list [here](https://puppet.com/docs/puppet/latest/system_requirements.html#supported_operating_systems-packaged-platforms))
-* one of wget/curl/fetch/perl-LWP-Simple in order to download packages
+* One of wget/curl/fetch/perl-LWP-Simple in order to download packages
+* `bash` (probably at least version 3)
+* Ability to run the script as `root`
 
 ### Usage
 
+### Install with curl
 ```sh
 curl -sSL https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash
+```
+
+### Install with wget
+```sh
+wget -qO - https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash
 ```
 
 Piping to `bash` is a controversial practice, so you are encouraged to inspect
