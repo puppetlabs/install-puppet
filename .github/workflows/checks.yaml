@@ -1,0 +1,22 @@
+---
+name: Static checks
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  checks:
+    name: ${{ matrix.check }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        check: [ shellcheck ]
+    steps:
+      - name: Checkout current PR
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Run ${{ matrix.check }}
+        run: ${{ matrix.check }} *.sh
