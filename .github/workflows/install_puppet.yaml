@@ -14,17 +14,17 @@ jobs:
       matrix:
         collection: [ puppet6, puppet7, puppet6-nightly, puppet7-nightly]
         os: [
-          # { image: "CentOS 6", image: "litmusimage/centos:6" },
-          # { image: "CentOS 7", image: "litmusimage/centos:7" },
-          { image: "CentOS 8", image: "litmusimage/centos:8" },
-          # { image: "Debian 9", image: "litmusimage/debian:9" },
-          { image: "Debian 10", image: "litmusimage/debian:10" },
-          # { image: "Debian 11", image: "litmusimage/debian:11" },
-          # { image: "Ubuntu 16.04", image: "litmusimage/ubuntu:16.04" },
-          { image: "Ubuntu 18.04", image: "litmusimage/ubuntu:18.04" },
-          # { image: "Ubuntu 20.04", image: "litmusimage/ubuntu:20.04" },
+          # { name: "CentOS 6", image: "litmusimage/centos:6" },
+          # { name: "CentOS 7", image: "litmusimage/centos:7" },
+          { name: "CentOS 8", image: "litmusimage/centos:8" },
+          # { name: "Debian 9", image: "litmusimage/debian:9" },
+          { name: "Debian 10", image: "litmusimage/debian:10" },
+          # { name: "Debian 11", image: "litmusimage/debian:11" },
+          # { name: "Ubuntu 16.04", image: "litmusimage/ubuntu:16.04" },
+          { name: "Ubuntu 18.04", image: "litmusimage/ubuntu:18.04" },
+          # { name: "Ubuntu 20.04", image: "litmusimage/ubuntu:20.04" },
         ]
-    image:
+    container:
       image: ${{ matrix.os.image }}
     steps:
       - name: Install puppet-agent from ${{ matrix.collection }} collection
