@@ -65,7 +65,7 @@ if [[ $PT__noop != true ]]; then
         rpm -e --allmatches ${collection}-release
         ;;
       Debian|LinuxMint|Linuxmint|Ubuntu)
-        dpkg -r ${collection}-release
+        apt-get purge ${collection}-release -y
         ;;
     esac
   fi
