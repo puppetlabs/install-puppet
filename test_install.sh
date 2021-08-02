@@ -31,7 +31,8 @@ while [[ "$#" -gt 0 ]]; do
   shift
 done
 
-curl -sSL https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash -s -- "${INSTALL_OPTIONS[@]}"
+bash install.sh "${INSTALL_OPTIONS[@]}"
+# curl -sSL https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash -s -- "${INSTALL_OPTIONS[@]}"
 
 if [ -n "$EXPECTED_VERSION" ]; then
   if ! exists $PUPPET_BIN; then

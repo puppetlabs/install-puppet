@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        collection: [ puppet6, puppet7, puppet6-nightly, puppet7-nightly]
+        collection: [ puppet6, puppet7 ]
         os: [
           # { name: "CentOS 6", image: "litmusimage/centos:6" },
           # { name: "CentOS 7", image: "litmusimage/centos:7" },
@@ -27,5 +27,9 @@ jobs:
     container:
       image: ${{ matrix.os.image }}
     steps:
+      - name: Checkout current PR
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
       - name: Install puppet-agent from ${{ matrix.collection }} collection
         run: bash -x test_install.sh -c ${{ matrix.collection }}
