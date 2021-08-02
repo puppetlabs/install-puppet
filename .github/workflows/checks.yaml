@@ -8,15 +8,17 @@ on:
 
 jobs:
   checks:
-    name: ${{ matrix.check }}
+    name: Run static checks
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        check: [ shellcheck ]
     steps:
       - name: Checkout current PR
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      - name: Run ${{ matrix.check }}
-        run: ${{ matrix.check }} *.sh
+      - name: Run shellcheck
+        run: |
+          scversion="stable" # or "v0.4.7", or "latest"
+          wget -qO- "https://github.com/koalaman/shellcheck/releases/download/${scversion?}/shellcheck-${scversion?}.linux.x86_64.tar.xz" | tar -xJv
+          sudo cp "shellcheck-${scversion}/shellcheck" /usr/bin/
+          shellcheck --version
+          shellcheck *.sh
