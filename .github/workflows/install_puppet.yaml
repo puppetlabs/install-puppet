@@ -11,6 +11,7 @@ jobs:
     name: ${{ matrix.collection }} / ${{ matrix.os.name }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         collection: [ puppet6, puppet7 ]
         os: [
