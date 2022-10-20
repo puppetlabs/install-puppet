@@ -16,13 +16,11 @@ jobs:
         collection: [ puppet6, puppet7 ]
         os: [
           { name: "CentOS 7", image: "litmusimage/centos:7" },
-          { name: "CentOS 8", image: "litmusimage/centos:8" },
-          { name: "Debian 9", image: "litmusimage/debian:9" },
           { name: "Debian 10", image: "litmusimage/debian:10" },
-          # { name: "Debian 11", image: "litmusimage/debian:11" }, # TODO enable when Debian 11 builds are public
-          { name: "Ubuntu 16.04", image: "litmusimage/ubuntu:16.04" },
+          { name: "Debian 11", image: "litmusimage/debian:11" },
           { name: "Ubuntu 18.04", image: "litmusimage/ubuntu:18.04" },
           { name: "Ubuntu 20.04", image: "litmusimage/ubuntu:20.04" },
+          { name: "Ubuntu 22.04", image: "litmusimage/ubuntu:22.04" },
         ]
     container:
       image: ${{ matrix.os.image }}
