@@ -848,7 +848,12 @@ case $platform in
       "8") deb_codename="jessie";;
       "9") deb_codename="stretch";;
       "10") deb_codename="buster";;
-      "11"|"testing") deb_codename="bullseye";; # FIXME: testing to be removed when Debian is released and major_version is changed to 11
+      "11") deb_codename="bullseye";;
+      "12"|"testing") deb_codename="bookworm";; # FIXME: testing to be removed when Debian is released and major_version is changed to 12
+      *)
+        critical "Sorry $platform:$major_version is not supported yet!"
+        exit 1;
+        ;;
     esac
     filetype="deb"
     filename="${collection}-release-${deb_codename}.deb"
@@ -860,9 +865,14 @@ case $platform in
       "3")  deb_codename="stretch";;
       "4")  deb_codename="buster";;
       "20") deb_codename="focal";;
+      "21") deb_codename="jammy";;
       "19") deb_codename="bionic";;
       "18") deb_codename="xenial";;
       "17") deb_codename="trusty";;
+      *)
+        critical "Sorry $platform:$major_version is not supported yet!"
+        exit 1;
+        ;;
     esac
     filetype="deb"
     filename="${collection}-release-${deb_codename}.deb"
@@ -885,6 +895,10 @@ case $platform in
       "18.04") deb_codename="bionic";;
       "20.04") deb_codename="focal";;
       "22.04") deb_codename="jammy";;
+      *)
+        critical "Sorry $platform:$platform_version is not supported yet!"
+        exit 1;
+        ;;
     esac
     filetype="deb"
     filename="${collection}-release-${deb_codename}.deb"
