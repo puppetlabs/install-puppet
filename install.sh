@@ -181,6 +181,7 @@ munge_name() {
     arista) echo "AristaEOS" ;;
     huawei) echo "HuaweiOS" ;;
     photon) echo "PhotonOS" ;;
+    freebsd) echo "FreeBSD" ;;
     *) echo "$(tr '[:lower:]' '[:upper:]' <<<"${ID:0:1}")""$(tr '[:upper:]' '[:lower:'] <<<"${ID:1}")"
   esac
 }
@@ -367,6 +368,8 @@ fi
 # Track to handle puppet5 to puppet6
 if [ -f /opt/puppetlabs/puppet/VERSION ]; then
   installed_version=`cat /opt/puppetlabs/puppet/VERSION`
+elif which puppet >/dev/null 2>&1; then
+  installed_version=`puppet --version`
 else
   installed_version=uninstalled
 fi
@@ -428,6 +431,14 @@ if true; then
   elif test "x$platform" = "xRedHat"; then
     platform="el"
 
+  # Handle Rocky
+  elif test "x$platform" = "xRocky"; then
+    platform="el"
+
+  # Handle AlmaLinux
+  elif test "x$platform" = "xAlmalinux"; then
+    platform="el"
+
   # If facts task return "Linux" for platform, investigate.
   elif test "x$platform" = "xLinux"; then
     if test -f "/etc/SuSE-release"; then
@@ -463,6 +474,7 @@ if true; then
       "10.14") platform_version="10.14";;
       "10.15") platform_version="10.15";;
       "11")    platform_version="11";;
+      "12")    platform_version="12";;
       *) echo "No builds for platform: $major_version"
          exit 1
          ;;
@@ -807,7 +819,7 @@ info "Downloading Puppet $version for ${platform}..."
 case $platform in
   "SLES")
     info "SLES platform! Lets get you an RPM..."
-    
+
     if [[ $PT__noop != true ]]; then
       for key in "puppet" "puppet-20250406"; do
         gpg_key="${tmp_dir}/RPM-GPG-KEY-${key}"
@@ -848,7 +860,7 @@ case $platform in
       "8") deb_codename="jessie";;
       "9") deb_codename="stretch";;
       "10") deb_codename="buster";;
-      "11"|"testing") deb_codename="bullseye";; # FIXME: testing to be removed when Debian is released and major_version is changed to 11
+      "11") deb_codename="bullseye";;
     esac
     filetype="deb"
     filename="${collection}-release-${deb_codename}.deb"
@@ -898,13 +910,22 @@ case $platform in
     else
       filename="puppet-agent-${version}-1.osx${platform_version}.dmg"
     fi
-    download_url="${mac_source}/mac/${collection}/${platform_version}/x86_64/${filename}"
+
+    arch="x86_64"
+    if [[ $(uname -p) == "arm" ]]; then
+        arch="arm64"
+    fi
+    download_url="${mac_source}/mac/${collection}/${platform_version}/${arch}/${filename}"
     ;;
   *)
     critical "Sorry $platform is not supported yet!"
     exit 1
     ;;
 esac
+
+if [[ -n "$PT_absolute_source" ]]; then
+  download_url=$PT_absolute_source
+fi
 
 if [[ $PT__noop != true ]]; then
   download_filename="${tmp_dir}/${filename}"
