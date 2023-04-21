@@ -62,10 +62,10 @@ if [[ $PT__noop != true ]]; then
     info "Cleanup requested, removing ${collection}-release repository..."
     case $platform in
       SLES|el|Amzn|"Amazon Linux"|Fedora)
-        rpm -e --allmatches ${collection}-release
+        rpm -e --allmatches "${collection}"-release
         ;;
       Debian|LinuxMint|Linuxmint|Ubuntu)
-        apt-get purge ${collection}-release -y
+        apt-get purge "${collection}"-release -y
         ;;
     esac
   fi
