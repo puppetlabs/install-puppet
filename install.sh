@@ -275,15 +275,15 @@ exists() {
 # Check whether the apt config file has been modified, warning and exiting early if it has
 assert_unmodified_apt_config() {
   puppet_list=/etc/apt/sources.list.d/puppet.list
-  puppet6_list=/etc/apt/sources.list.d/puppet6.list
   puppet7_list=/etc/apt/sources.list.d/puppet7.list
+  puppet8_list=/etc/apt/sources.list.d/puppet8.list
 
   if [[ -f $puppet_list ]]; then
     list_file=puppet_list
-  elif [[ -f $puppet6_list ]]; then
-    list_file=puppet6_list
   elif [[ -f $puppet7_list ]]; then
     list_file=puppet7_list
+  elif [[ -f $puppet8_list ]]; then
+    list_file=puppet8_list
   fi
 
   # If puppet.list exists, get its md5sum on disk and its md5sum from the puppet-release package
@@ -454,7 +454,7 @@ if true; then
       platform_version=`sed 's/^.\+ release \([.0-9]\+\).*/\1/' /etc/redhat-release`
     fi
 
-  # Handle OSX
+  # Handle macOS
   elif test "x$platform" = "xDarwin"; then
     platform="mac_os_x"
     # Matching the tab-space with sed is error-prone
@@ -462,7 +462,7 @@ if true; then
 
     major_version=`echo $platform_version | cut -d. -f1,2`
 
-    # Excepting MacOS 10.x, the major version is the first number only
+    # Excepting macOS 10.x, the major version is the first number only
     if ! echo "${major_version}" | grep -q '^10\.'; then
         major_version=$(echo "${major_version}" | cut -d '.' -f 1);
     fi
@@ -540,7 +540,7 @@ if test "x$TMPDIR" = "x"; then
   tmp="/tmp"
 else
   tmp=${TMPDIR}
-  # TMPDIR has trailing file sep for OSX test box
+  # TMPDIR has trailing file sep for macOS test box
   penultimate=$((${#tmp}-1))
   if test "${tmp:$penultimate:1}" = "/"; then
     tmp="${tmp:0:$penultimate}"
@@ -854,11 +854,6 @@ case $platform in
   "Debian")
     info "Debian platform! Lets get you a DEB..."
     case $major_version in
-      "5") deb_codename="lenny";;
-      "6") deb_codename="squeeze";;
-      "7") deb_codename="wheezy";;
-      "8") deb_codename="jessie";;
-      "9") deb_codename="stretch";;
       "10") deb_codename="buster";;
       "11") deb_codename="bullseye";;
     esac
@@ -871,6 +866,8 @@ case $platform in
     case $major_version in
       "3")  deb_codename="stretch";;
       "4")  deb_codename="buster";;
+      "5")  deb_codename="bullseye";;
+      "21") deb_codename="jammy";;
       "20") deb_codename="focal";;
       "19") deb_codename="bionic";;
       "18") deb_codename="xenial";;
@@ -883,15 +880,6 @@ case $platform in
   "Ubuntu")
     info "Ubuntu platform! Lets get you a DEB..."
     case $platform_version in
-      "12.04") deb_codename="precise";;
-      "12.10") deb_codename="quantal";;
-      "13.04") deb_codename="raring";;
-      "13.10") deb_codename="saucy";;
-      "14.04") deb_codename="trusty";;
-      "14.10") deb_codename="trusty";;
-      "15.04") deb_codename="vivid";;
-      "15.10") deb_codename="wily";;
-      "16.04") deb_codename="xenial";;
       "16.10") deb_codename="yakkety";;
       "17.04") deb_codename="zesty";;
       "18.04") deb_codename="bionic";;
@@ -903,7 +891,7 @@ case $platform in
     download_url="${apt_source}/${filename}"
     ;;
   "mac_os_x")
-    info "OSX platform! Lets get you a DMG..."
+    info "Mac platform! Lets get you a DMG..."
     filetype="dmg"
     if test "$version" = "latest"; then
       filename="puppet-agent-latest.dmg"
@@ -951,10 +939,10 @@ if [[ $PT__noop != true ]]; then
     info "Cleanup requested, removing ${collection}-release repository..."
     case $platform in
       SLES|el|Amzn|"Amazon Linux"|Fedora)
-        rpm -e --allmatches ${collection}-release
+        rpm -e --allmatches "${collection}"-release
         ;;
       Debian|LinuxMint|Linuxmint|Ubuntu)
-        apt-get purge ${collection}-release -y
+        apt-get purge "${collection}"-release -y
         ;;
     esac
   fi
