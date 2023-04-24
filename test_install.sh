@@ -23,6 +23,7 @@ while [[ "$#" -gt 0 ]]; do
           puppet|puppet-nightly) EXPECTED_VERSION="7." ;;
           puppet6|puppet6-nightly) EXPECTED_VERSION="6." ;;
           puppet7|puppet7-nightly) EXPECTED_VERSION="7." ;;
+          puppet8|puppet8-nightly) EXPECTED_VERSION="8." ;;
         esac
         ;;
       --cleanup) EXPECT_CLEANUP=true; shift ;;
