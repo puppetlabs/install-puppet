@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        collection: [ puppet6, puppet7 ]
+        collection: [ puppet6, puppet7, puppet8 ]
         os: [
           { name: "CentOS 7", image: "litmusimage/centos:7" },
           { name: "Debian 10", image: "litmusimage/debian:10" },
