@@ -472,7 +472,6 @@ if true; then
       "10.12") platform_version="10.12";;
       "10.13") platform_version="10.13";;
       "10.14") platform_version="10.14";;
-      "10.15") platform_version="10.15";;
       "11")    platform_version="11";;
       "12")    platform_version="12";;
       *) echo "No builds for platform: $major_version"
