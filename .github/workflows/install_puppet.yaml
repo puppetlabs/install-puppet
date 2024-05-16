@@ -6,7 +6,7 @@ on:
   pull_request:
     branches: [ main ]
 
-# Even thought checkout@v3 is end-of-life, we cannot upgrade to v4
+# Even though checkout@v3 is end-of-life, we cannot upgrade to v4
 # because it cannot run on CentOS 7 and Ubuntu 18.04
 jobs:
   install-puppet:
