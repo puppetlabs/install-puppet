@@ -521,7 +521,7 @@ case $platform in
     ;;
   "Amzn"|"Amazon Linux")
     case $platform_version in
-      "2") platform_version="7";;
+      "2") platform_version="2";;
     esac
     ;;
 esac
@@ -789,10 +789,15 @@ install_file() {
       fi
 
       rpm -Uvh --oldpackage --replacepkgs "$2"
-      if test "$version" = 'latest'; then
-        run_cmd "yum install -y puppet-agent && yum upgrade -y puppet-agent"
+      if exists dnf; then
+        PKGCMD=dnf
       else
-        run_cmd "yum install -y 'puppet-agent-${puppet_agent_version}'"
+        PKGCMD=yum
+      fi
+      if test "$version" = 'latest'; then
+        run_cmd "${PKGCMD} install -y puppet-agent && ${PKGCMD} upgrade -y puppet-agent"
+      else
+        run_cmd "${PKGCMD} install -y 'puppet-agent-${puppet_agent_version}'"
       fi
       ;;
     "noarch.rpm")
@@ -897,7 +902,7 @@ case $platform in
     filetype="rpm"
     platform_package="el"
     # For Amazon Linux 2023 and onwards we can use the 'amazon' packages created instead of 'el' packages
-    if (( $platform_version >= 2023 )); then
+    if (( $platform_version >= 2 )); then
       platform_package="amazon"
     fi
     filename="${collection}-release-${platform_package}-${platform_version}.noarch.rpm"
