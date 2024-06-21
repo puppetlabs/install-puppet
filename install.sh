@@ -789,11 +789,7 @@ install_file() {
       fi
 
       rpm -Uvh --oldpackage --replacepkgs "$2"
-      if exists dnf; then
-        PKGCMD=dnf
-      else
-        PKGCMD=yum
-      fi
+      exists dnf && PKGCMD=dnf || PKGCMD=yum
       if test "$version" = 'latest'; then
         run_cmd "${PKGCMD} install -y puppet-agent && ${PKGCMD} upgrade -y puppet-agent"
       else
@@ -950,6 +946,7 @@ case $platform in
       "18.04") deb_codename="bionic";;
       "20.04") deb_codename="focal";;
       "22.04") deb_codename="jammy";;
+      "24.04") deb_codename="noble";;
     esac
     filetype="deb"
     filename="${collection}-release-${deb_codename}.deb"
