@@ -6,8 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# Even though checkout@v3 is end-of-life, we cannot upgrade to v4
-# because it cannot run on CentOS 7 and Ubuntu 18.04
 jobs:
   install-puppet:
     name: ${{ matrix.collection }} / ${{ matrix.os.name }}
@@ -17,11 +15,9 @@ jobs:
       matrix:
         collection: [ puppet7, puppet8 ]
         os: [
-          { name: "CentOS 7", image: "litmusimage/centos:7" },
           { name: "Debian 10", image: "litmusimage/debian:10" },
           { name: "Debian 11", image: "litmusimage/debian:11" },
           { name: "Debian 12", image: "litmusimage/debian:12" },
-          { name: "Ubuntu 18.04", image: "litmusimage/ubuntu:18.04" },
           { name: "Ubuntu 20.04", image: "litmusimage/ubuntu:20.04" },
           { name: "Ubuntu 22.04", image: "litmusimage/ubuntu:22.04" },
         ]
@@ -29,7 +25,7 @@ jobs:
       image: ${{ matrix.os.image }}
     steps:
       - name: Checkout current PR
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install puppet-agent from ${{ matrix.collection }} collection

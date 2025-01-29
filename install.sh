@@ -364,7 +364,7 @@ if [ -n "$PT_mac_source" ]; then
   mac_source=$PT_mac_source
 else
   if [ "$nightly" = true ]; then
-    mac_source='http://nightlies.puppet.com/downloads'
+    mac_source='https://artifactory.delivery.puppetlabs.net:443/artifactory/internal_nightly__local/downloads'
   else
     mac_source='http://downloads.puppet.com'
   fi
@@ -481,6 +481,7 @@ if true; then
       "12")    platform_version="12";;
       "13")    platform_version="13";;
       "14")    platform_version="14";;
+      "15")    platform_version="15";;
       *) echo "No builds for platform: $major_version"
          exit 1
          ;;
