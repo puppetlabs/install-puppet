@@ -518,6 +518,7 @@ if true; then
       "13")    platform_version="13";;
       "14")    platform_version="14";;
       "15")    platform_version="15";;
+      "26")    platform_version="26";;
       *) echo "No builds for platform: $major_version"
          exit 1
          ;;
