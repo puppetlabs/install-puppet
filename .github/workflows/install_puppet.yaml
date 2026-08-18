@@ -8,25 +8,26 @@ on:
 
 jobs:
   install-puppet:
-    name: ${{ matrix.collection }} / ${{ matrix.os.name }}
-    runs-on: ubuntu-latest
+    name: ${{ matrix.collection }} / ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        collection: [ puppet7, puppet8 ]
-        os: [
-          { name: "Debian 10", image: "litmusimage/debian:10" },
-          { name: "Debian 11", image: "litmusimage/debian:11" },
-          { name: "Debian 12", image: "litmusimage/debian:12" },
-          { name: "Ubuntu 20.04", image: "litmusimage/ubuntu:20.04" },
-          { name: "Ubuntu 22.04", image: "litmusimage/ubuntu:22.04" },
-        ]
-    container:
-      image: ${{ matrix.os.image }}
+        os: ['macos-14', 'ubuntu-24.04']
+        collection: [ puppet8, puppetcore8, puppetcore9 ]
+        include:
+          - collection: puppetcore8
+            version: "8.21.0"
+          - collection: puppetcore9
+            version: "9.0.0"
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout current PR
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install puppet-agent from ${{ matrix.collection }} collection
-        run: bash -x test_install.sh -c ${{ matrix.collection }}
+        if: ${{ contains(matrix.collection, 'core') }}
+        run: sudo bash -x test_install.sh -v ${{ matrix.version }} -c ${{ matrix.collection }} -p ${{ secrets.PUPPET_FORGE_TOKEN_PUBLIC }}
+      - name: Install puppet-agent from ${{ matrix.collection }} collection (pre Puppet Core)
+        if: ${{ !contains(matrix.collection, 'core') }}
+        run: sudo bash -x test_install.sh -v 8.10.0 -c ${{ matrix.collection }}

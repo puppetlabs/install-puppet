@@ -6,12 +6,14 @@ function usage()
 {
    cat << HEREDOC
 
-   Usage: install.sh [--version VERSION] [--collection COLLECTION] [--cleanup] [--noop]
+   Usage: install.sh [--version VERSION] [--collection COLLECTION] [--username USERNAME] [--password PASSWORD] [--cleanup] [--noop]
 
    optional arguments:
      -h, --help                   show this help message and exit
      -v, --version VERSION        install a specific puppet-agent version
      -c, --collection COLLECTION  install a specific puppet-agent collection (e.g. puppet7)
+     -u, --username USERNAME      username for Puppet Core package downloads, paired with --password; defaults to forge-key
+     -p, --password PASSWORD      Forge API key or PE License ID, paired with --username
      -n, --noop                   do a dry run, do not change any files
      --cleanup                    remove the puppetlabs repository after installation finishes
 
@@ -31,6 +33,8 @@ while [[ "$#" -gt 0 ]]; do
            PT_collection="puppet"
          fi ;;
       -c|--collection) PT_collection="$2"; shift ;;
+      -u|--username) PT_username="$2"; shift ;;
+      -p|--password) PT_password="$2"; shift ;;
       --cleanup) PT_cleanup=true; shift ;;
       -n|--noop) PT__noop=true; shift ;;
       -h|--help) usage; exit ;;
@@ -282,6 +286,7 @@ assert_unmodified_apt_config() {
   puppet_list=/etc/apt/sources.list.d/puppet.list
   puppet7_list=/etc/apt/sources.list.d/puppet7.list
   puppet8_list=/etc/apt/sources.list.d/puppet8.list
+  puppet9_list=/etc/apt/sources.list.d/puppet9.list
 
   if [[ -f $puppet_list ]]; then
     list_file=puppet_list
@@ -289,6 +294,8 @@ assert_unmodified_apt_config() {
     list_file=puppet7_list
   elif [[ -f $puppet8_list ]]; then
     list_file=puppet8_list
+  elif [[ -f $puppet9_list ]]; then
+    list_file=puppet9_list
   fi
 
   # If puppet.list exists, get its md5sum on disk and its md5sum from the puppet-release package
@@ -360,50 +367,46 @@ else
   collection='puppet'
 fi
 
+if [[ "$collection" != puppetcore*-nightly && "$collection" == "puppetcore"* && -z "$password" ]]; then
+  echo "A password parameter is required to install from puppetcore"
+  exit 1
+fi
+
 if [ -n "$PT_yum_source" ]; then
   yum_source=$PT_yum_source
+elif [[ "$collection" == puppetcore*-nightly ]]; then
+  yum_source='https://artifactory.delivery.puppetlabs.net:443/artifactory/internal_nightly__local/yum'
+elif [[ "$collection" == "puppetcore"* ]]; then
+  yum_source='https://yum-puppetcore.puppet.com/public'
+elif [ "$nightly" = true ]; then
+  yum_source='http://nightlies.puppet.com/yum'
 else
-  if [[ "$collection" == "puppetcore"* ]]; then
-    yum_source='https://yum-puppetcore.puppet.com/public'
-    if [ -z "$password" ]; then
-      echo "A password parameter is required to install from ${yum_source}"
-      exit 1
-    fi
-  else
-    if [ "$nightly" = true ]; then
-      yum_source='http://nightlies.puppet.com/yum'
-    else
-      yum_source='http://yum.puppet.com'
-    fi
-  fi
+  yum_source='http://yum.puppet.com'
 fi
 
 if [ -n "$PT_apt_source" ]; then
   apt_source=$PT_apt_source
+elif [[ "$collection" == puppetcore*-nightly ]]; then
+  apt_source='https://artifactory.delivery.puppetlabs.net:443/artifactory/internal_nightly__local/apt'
+elif [[ "$collection" == "puppetcore"* ]]; then
+  apt_source='https://apt-puppetcore.puppet.com/public'
+elif [ "$nightly" = true ]; then
+  apt_source='http://nightlies.puppet.com/apt'
 else
-  if [[ "$collection" == "puppetcore"* ]]; then
-    apt_source='https://apt-puppetcore.puppet.com/public'
-    if [ -z "$password" ]; then
-        echo "A password parameter is required to install from ${apt_source}"
-        exit 1
-    fi
-  else
-    if [ "$nightly" = true ]; then
-      apt_source='http://nightlies.puppet.com/apt'
-    else
-      apt_source='http://apt.puppet.com'
-    fi
-  fi
+  apt_source='http://apt.puppet.com'
 fi
 
 if [ -n "$PT_mac_source" ]; then
   mac_source=$PT_mac_source
+
+elif [[ "$collection" == puppetcore*-nightly ]]; then
+  mac_source='https://artifactory.delivery.puppetlabs.net:443/artifactory/internal_nightly__local/downloads'
+elif [[ "$collection" == "puppetcore"* ]]; then
+  mac_source='https://artifacts-puppetcore.puppet.com/v1/download'
+elif [ "$nightly" = true ]; then
+  mac_source='http://nightlies.puppet.com/downloads'
 else
-  if [ "$nightly" = true ]; then
-    mac_source='http://nightlies.puppet.com/downloads'
-  else
-    mac_source='http://downloads.puppet.com'
-  fi
+  mac_source='http://downloads.puppet.com'
 fi
 
 if [ -n "$PT_retry" ]; then
@@ -631,16 +634,27 @@ run_cmd() {
   return $rc
 }
 
-# do_wget URL FILENAME
+# do_wget URL FILENAME [USERNAME] [PASSWORD]
 do_wget() {
   info "Trying wget..."
-  run_cmd "wget -O '$2' '$1' 2>$tmp_stderr"
+  if [[ -n "$3" && -n "$4" ]]; then
+    run_cmd "wget -O '$2' --user '$3' --password '$4' '$1' 2>$tmp_stderr"
+  else
+    run_cmd "wget -O '$2' '$1' 2>$tmp_stderr"
+  fi
   rc=$?
 
   # check for 404
   grep "ERROR 404" $tmp_stderr 2>&1 >/dev/null
   if test $? -eq 0; then
     critical "ERROR 404"
+    unable_to_retrieve_package
+  fi
+
+  # check for 401
+  grep "ERROR 401" $tmp_stderr 2>&1 >/dev/null
+  if test $? -eq 0; then
+    critical "ERROR 401"
     unable_to_retrieve_package
   fi
 
@@ -653,16 +667,27 @@ do_wget() {
   return 0
 }
 
-# do_curl URL FILENAME
+# do_curl URL FILENAME [USERNAME] [PASSWORD]
 do_curl() {
   info "Trying curl..."
-  run_cmd "curl -1 -sL -D $tmp_stderr '$1' > '$2'"
+  if [[ -n "$3" && -n "$4" ]]; then
+    run_cmd "curl -1 -sL -u'$3:$4' -D $tmp_stderr '$1' > '$2'"
+  else
+    run_cmd "curl -1 -sL -D $tmp_stderr '$1' > '$2'"
+  fi
   rc=$?
 
   # check for 404
-  grep "404 Not Found" $tmp_stderr 2>&1 >/dev/null
+  grep "HTTP/.* 404" $tmp_stderr 2>&1 >/dev/null
   if test $? -eq 0; then
     critical "ERROR 404"
+    unable_to_retrieve_package
+  fi
+
+  # check for 401
+  grep "HTTP/.* 401" $tmp_stderr 2>&1 >/dev/null
+  if test $? -eq 0; then
+    critical "ERROR 401"
     unable_to_retrieve_package
   fi
 
@@ -779,7 +804,7 @@ do_perl_ff() {
   return 1
 }
 
-# do_download URL FILENAME
+# do_download URL FILENAME [USERNAME] [PASSWORD]
 do_download() {
   info "Downloading $1"
   info "  to file $2"
@@ -788,11 +813,11 @@ do_download() {
   # perl, in particular may be present but LWP::Simple may not be installed
 
   if exists wget; then
-    do_wget $1 $2 && return 0
+    do_wget $1 $2 $3 $4 && return 0
   fi
 
   if exists curl; then
-    do_curl $1 $2 && return 0
+    do_curl $1 $2 $3 $4 && return 0
   fi
 
   if exists fetch; then
@@ -833,7 +858,8 @@ install_file() {
       if test "x$installed_version" != "xuninstalled"; then
         info "Version ${installed_version} detected..."
         major=$(echo $installed_version | cut -d. -f1)
-        pkg="puppet${major}-release"
+        pkg=$(rpm -qa --qf '%{NAME}\n' | grep "^puppet${major}.*-release$" | head -1)
+        [ -z "$pkg" ] && pkg="puppet${major}-release"
 
         if echo $2 | grep $pkg; then
           info "No collection upgrade detected"
@@ -845,7 +871,7 @@ install_file() {
 
       repo="/etc/yum.repos.d/${collection/core/}-release.repo"
       rpm -Uvh --oldpackage --replacepkgs "$2"
-      if [[ "$collection" =~ core ]]; then
+      if [[ "$collection" != puppetcore*-nightly && "$collection" =~ core ]]; then
         if [[ -n $username ]]; then
           sed -i "s/^#\?username=.*/username=${username}/" "${repo}"
         fi
@@ -866,7 +892,8 @@ install_file() {
       if test "x$installed_version" != "xuninstalled"; then
         info "Version ${installed_version} detected..."
         major=$(echo $installed_version | cut -d. -f1)
-        pkg="puppet${major}-release"
+        pkg=$(rpm -qa --qf '%{NAME}\n' | grep "^puppet${major}.*-release$" | head -1)
+        [ -z "$pkg" ] && pkg="puppet${major}-release"
 
         if echo $2 | grep $pkg; then
           info "No collection upgrade detected"
@@ -877,7 +904,7 @@ install_file() {
       fi
 
       run_cmd "zypper install --no-confirm '$2'"
-      if [[ "$collection" =~ core ]]; then
+      if [[ "$collection" != puppetcore*-nightly && "$collection" =~ core ]]; then
         if [[ -n $username ]]; then
           sed -i "s/^username=.*/username=${username}/" "/etc/zypp/credentials.d/PuppetcoreCreds"
         fi
@@ -897,7 +924,8 @@ install_file() {
       if test "x$installed_version" != "xuninstalled"; then
         info "Version ${installed_version} detected..."
         major=$(echo $installed_version | cut -d. -f1)
-        pkg="puppet${major}-release"
+        pkg=$(dpkg-query -W -f='${Package}\n' 2>/dev/null | grep "^puppet${major}.*-release$" | head -1)
+        [ -z "$pkg" ] && pkg="puppet${major}-release"
 
         if echo $2 | grep $pkg; then
           info "No collection upgrade detected"
@@ -910,7 +938,7 @@ install_file() {
       assert_unmodified_apt_config
 
       dpkg -i --force-confmiss "$2"
-      if [[ "$collection" =~ core ]]; then
+      if [[ "$collection" != puppetcore*-nightly && "$collection" =~ core ]]; then
         auth_conf="/etc/apt/auth.conf.d/apt-puppetcore-puppet.conf"
         sed -i "/^#?login/d" "${auth_conf}"
         echo "login ${username}" >> "${auth_conf}"
@@ -1040,6 +1068,7 @@ case $platform in
       "20.04") deb_codename="focal";;
       "22.04") deb_codename="jammy";;
       "24.04") deb_codename="noble";;
+      "26.04") deb_codename="resolute";;
     esac
     filetype="deb"
     filename="${collection/core/}-release-${deb_codename}.deb"
@@ -1058,7 +1087,20 @@ case $platform in
     if [[ $(uname -p) == "arm" ]]; then
         arch="arm64"
     fi
-    download_url="${mac_source}/mac/${collection}/${platform_version}/${arch}/${filename}"
+    if [[ "$collection" != puppetcore*-nightly && "$collection" =~ core ]]; then
+      if [[ -z "$version" ]]; then
+        critical "You must provide a version to install the agent from puppetcore on MacOS/Windows."
+        exit 1
+      fi
+      dots=$(echo "${version}" | grep -o '\.' | wc -l)
+      if (( dots >= 3 )); then
+        download_url="${mac_source}?type=native&version=${version}&os_name=osx&os_version=${platform_version}&os_arch=${arch}&dev=true"
+      else
+        download_url="${mac_source}?type=native&version=${version}&os_name=osx&os_version=${platform_version}&os_arch=${arch}"
+      fi
+    else
+      download_url="${mac_source}/mac/${collection/core/}/${platform_version}/${arch}/${filename}"
+    fi
     ;;
   *)
     critical "Sorry $platform is not supported yet!"
@@ -1073,7 +1115,7 @@ fi
 if [[ $PT__noop != true ]]; then
   download_filename="${tmp_dir}/${filename}"
 
-  do_download "$download_url" "$download_filename"
+  do_download "$download_url" "$download_filename" "$username" "$password"
 
   install_file $filetype "$download_filename"
 

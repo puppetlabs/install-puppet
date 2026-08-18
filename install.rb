@@ -20,12 +20,14 @@ function usage()
 {
    cat << HEREDOC
 
-   Usage: install.sh [--version VERSION] [--collection COLLECTION] [--cleanup] [--noop]
+   Usage: install.sh [--version VERSION] [--collection COLLECTION] [--username USERNAME] [--password PASSWORD] [--cleanup] [--noop]
 
    optional arguments:
      -h, --help                   show this help message and exit
      -v, --version VERSION        install a specific puppet-agent version
      -c, --collection COLLECTION  install a specific puppet-agent collection (e.g. puppet7)
+     -u, --username USERNAME      username for Puppet Core package downloads, paired with --password; defaults to forge-key
+     -p, --password PASSWORD      Forge API key or PE License ID, paired with --username
      -n, --noop                   do a dry run, do not change any files
      --cleanup                    remove the puppetlabs repository after installation finishes
 
@@ -45,6 +47,8 @@ while [[ "$#" -gt 0 ]]; do
            PT_collection="puppet"
          fi ;;
       -c|--collection) PT_collection="$2"; shift ;;
+      -u|--username) PT_username="$2"; shift ;;
+      -p|--password) PT_password="$2"; shift ;;
       --cleanup) PT_cleanup=true; shift ;;
       -n|--noop) PT__noop=true; shift ;;
       -h|--help) usage; exit ;;

@@ -1,0 +1,36 @@
+---
+name: Install Puppet (Nightly)
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  install-puppet-nightly:
+    name: ${{ matrix.collection }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        collection: [ puppetcore8-nightly, puppetcore9-nightly ]
+    steps:
+      - name: Checkout current PR
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Connect Twingate
+        uses: twingate/github-action@v1.5
+        with:
+          service-key: ${{ secrets.TWINGATE_PUBLIC_REPO_KEY }}
+
+      - name: Fix DNS for Twingate
+        run: |
+          sudo resolvectl dns eth0 ""
+          sudo resolvectl dns sdwan0 100.95.0.251 100.95.0.252
+          sudo resolvectl domain sdwan0 delivery.puppetlabs.net
+          sudo resolvectl flush-caches
+
+      - name: Install puppet-agent from ${{ matrix.collection }} collection
+        run: sudo bash -x test_install.sh -c ${{ matrix.collection }}
