@@ -20,12 +20,11 @@ while [[ "$#" -gt 0 ]]; do
       -v|--version) EXPECTED_VERSION="$2"; shift ;;
       -c|--collection) EXPECTED_COLLECTION="$2"; shift;
         case $EXPECTED_COLLECTION in
-          puppet|puppet-nightly) EXPECTED_VERSION="7." ;;
-          puppet6|puppet6-nightly) EXPECTED_VERSION="6." ;;
-          puppet7|puppet7-nightly) EXPECTED_VERSION="7." ;;
-          puppet8|puppet8-nightly) EXPECTED_VERSION="8." ;;
+          puppet8|puppet8-nightly|puppetcore8|puppetcore8-nightly) EXPECTED_VERSION="8." ;;
+          puppet9|puppet9-nightly|puppetcore9|puppetcore9-nightly) EXPECTED_VERSION="9." ;;
         esac
         ;;
+      -p|--password) PASSWORD=$2; EXPECT_PASSWORD=true; shift;;
       --cleanup) EXPECT_CLEANUP=true; shift ;;
       *) echo "Unknown parameter passed: $1"; usage; exit 1 ;;
   esac
@@ -33,7 +32,25 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 bash install.sh "${INSTALL_OPTIONS[@]}"
-# curl -sSL https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash -s -- "${INSTALL_OPTIONS[@]}"
+
+if [[ $EXPECT_PASSWORD == true ]]; then
+  if exists curl; then
+    validate_key=$(curl -u forge-key:"$PASSWORD" -o /dev/null -s -w "%{http_code}\n" \
+      https://yum-puppetcore.puppet.com/puppet9/el/8/x86_64/repodata/repomd.xml)
+  elif exists wget; then
+    validate_key=$(wget --http-user=forge-key --http-password="$PASSWORD" --auth-no-challenge -O /dev/null -S \
+      https://yum-puppetcore.puppet.com/puppet9/el/8/x86_64/repodata/repomd.xml 2>&1 \
+      | awk '/^  HTTP/{print $2; exit}')
+  else
+    echo "ERROR: neither curl nor wget found; cannot validate Forge API key"
+    exit 1
+  fi
+
+  if [[ "$validate_key" != "200" ]]; then
+    echo "ERROR: invalid Forge API key given"
+    exit 1
+  fi
+fi
 
 if [ -n "$EXPECTED_VERSION" ]; then
   if ! exists $PUPPET_BIN; then

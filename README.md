@@ -44,9 +44,7 @@ before executing it.
 
 ### Script arguments
 
-If run with no arguments, the script will install the latest stable version of puppet-agent. 
-
-You can install a specific version using:
+To pass flags via the curl-pipe pattern:
 ```sh
 curl -sSL https://raw.githubusercontent.com/puppetlabs/install-puppet/main/install.sh | bash -s -- -v 6.24.0
 ```
@@ -55,8 +53,36 @@ Below is the full list of configurable options:
 
 * `-v`/`--version` - install a specific puppet-agent version
 * `-c`/`--collection` - install a specific puppet-agent collection (e.g. puppet7)
+* `-u`/`--username` - username for Puppet Core package downloads, paired with --password; defaults to `forge-key`
+* `-p`/`--password` - Forge API key or PE License ID, paired with --username
 * `-n`/`--noop` - do a dry run, do not change any files
 * `--cleanup` - remove the puppetlabs repository after installation finishes
+
+### Installing Puppet Core
+
+Puppet 8.11.0 and later are distributed as **Puppet Core**, under `puppetcore*`
+collections (e.g. `puppetcore9`), and require a Forge API key. The
+`puppet`/`puppet7`/`puppet8` collections are still free, but are frozen at
+their last pre-Core release (`puppet8` stopped at 8.10) - any 8.11+ release
+only ships via `puppetcore8`.
+
+To get a Forge API key:
+
+1. Log in at [forge.puppet.com](https://forge.puppet.com).
+2. Accept the Puppet Core EULA: profile menu → **Puppet** → **Puppet Core EULA**.
+3. Enable MFA: profile → **Settings** → "Use Multifactor Authentication" (required before you can create a key).
+4. Profile → **API Keys** → **Create a new key**, and copy it immediately - Forge only displays it once.
+
+```sh
+./install.sh -v 9.0.0 -c puppetcore9 -u forge-key -p <FORGE_KEY>
+```
+
+> **Using PE License ID**:
+> You must use `forge-key` to download Puppet Core packages from `yum-puppetcore.puppet.com` or `apt-puppetcore.puppet.com`.
+> However, either `forge-key` or `license-id` (associated with Puppet Enterprise) can be used to download artifacts from `artifacts-puppetcore.puppet.com` and Ruby gems from `rubygems-puppetcore.puppet.com`.
+> ```sh
+> ./install.sh -v 9.0.0 -c puppetcore9 -u license-id -p "$LICENSE_ID"
+> ```
 
 ## Development
 
