@@ -171,6 +171,7 @@ munge_name() {
     psbm) echo "PSBM" ;;
     xenserver) echo "XenServer" ;;
     linuxmint) echo "LinuxMint" ;;
+    almalinux) echo "Almalinux" ;;
     sles) echo "SLES" ;;
     suse) echo "SuSE" ;;
     opensuse) echo "OpenSuSE" ;;
@@ -519,6 +520,7 @@ if true; then
       "14")    platform_version="14";;
       "15")    platform_version="15";;
       "26")    platform_version="26";;
+      "27")    platform_version="27";;
       *) echo "No builds for platform: $major_version"
          exit 1
          ;;
@@ -1030,7 +1032,7 @@ case $platform in
     filename="${collection/core/}-release-fedora-${platform_version}.noarch.rpm"
     download_url="${yum_source}/${filename}"
     ;;
-  "Debian")
+  "Debian"|"Raspbian")
     info "Debian platform! Lets get you a DEB..."
     case $major_version in
       "10") deb_codename="buster";;
